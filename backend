@@ -1,0 +1,67 @@
+from flask import Flask, request, jsonify
+import MySQLdb
+#Create the application.
+app = Flask(__name__)
+db = MySQLdb.connect(host="localhost", user="***", passwd="********", db="***")
+
+@app.route('/insert',methods =['POST'])
+def insert():
+    try: 
+        cur = db.cursor() 
+        if request.method =='POST':  
+             body = request.get_json()  
+             name = body['name'] 
+             email = body['email']
+             dept = body['dept']
+             cur.execute("SELECT * FROM dept where dept_name = %s",(dept,)) 
+             data =cur.fetchall()
+             id = data[0][0]
+             cur.execute("INSERT INTO student(name,email,dept) VALUES (%s, %s, %s)", (name, email, id))
+             db.commit() 
+             return jsonify({"Id of last inserted row":cur.lastrowid})
+
+    except Exception as e:  
+        return {"Error:":str(e)}
+@app.route('/update/<id>',methods =['PATCH'])
+def update(id):
+    try: 
+        cur = db.cursor() 
+        if request.method =='PATCH':
+             body = request.get_json()  
+             name = body['name']   
+             sql = "UPDATE student SET name = %s WHERE id = %s"
+             val=(name,id)
+             cur.execute(sql,val)
+             db.commit() 
+             return jsonify({"Id of last inserted row":cur.lastrowid})
+
+    except Exception as e:  
+        return {"Error:":str(e)}
+@app.route('/delete/<id>',methods =['DELETE'])
+def delete(id):
+    try: 
+        cur = db.cursor() 
+        if request.method =='DELETE':
+             sql = "DELETE FROM student WHERE id = %s"
+             val=(id,)
+             cur.execute(sql,val)
+             db.commit() 
+             return "deteted"
+
+    except Exception as e:  
+        return {"Error:":str(e)}
+@app.route('/ret',methods =['GET'])
+def ret():
+    try: 
+        cur = db.cursor() 
+        if request.method =='GET':
+             cur.execute("SELECT * FROM student") 
+             data =cur.fetchall()
+             db.commit() 
+             return jsonify(data)
+
+    except Exception as e:  
+        return {"Error:":str(e)}
+if __name__ == '__main__':
+    app.debug=True
+    app.run(port=5001)
